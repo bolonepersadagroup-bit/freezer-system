@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Scan Freezer</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    min-height: 100vh;
+    background: #f5f5f0;
+    font-family: 'Nunito', sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+  .card {
+    background: white;
+    border-radius: 24px;
+    padding: 32px 28px;
+    width: 100%;
+    max-width: 420px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.08);
+  }
+  .header {
+    text-align: center;
+    margin-bottom: 28px;
+  }
+  .freezer-id {
+    font-family: 'Fredoka One', cursive;
+    font-size: 48px;
+    color: #4a7c3f;
+    line-height: 1;
+  }
+  .freezer-label {
+    font-size: 14px;
+    color: #999;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-top: 4px;
+  }
+  .divider {
+    height: 2px;
+    background: #f0f0ea;
+    border-radius: 2px;
+    margin: 20px 0;
+  }
+  .field {
+    margin-bottom: 20px;
+  }
+  label {
+    display: block;
+    font-size: 12px;
+    font-weight: 800;
+    color: #555;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .toggle-row {
+    display: flex;
+    gap: 10px;
+  }
+  .toggle-btn {
+    flex: 1;
+    padding: 14px;
+    border: 2px solid #e0e0d8;
+    border-radius: 14px;
+    background: white;
+    font-family: 'Nunito', sans-serif;
+    font-size: 16px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: #aaa;
+  }
+  .toggle-btn.active-on {
+    background: #4a7c3f;
+    border-color: #4a7c3f;
+    color: white;
+  }
+  .toggle-btn.active-off {
+    background: #c0392b;
+    border-color: #c0392b;
+    color: white;
+  }
+  input[type="text"], select {
+    width: 100%;
+    padding: 14px 16px;
+    border: 2px solid #e0e0d8;
+    border-radius: 14px;
+    font-family: 'Nunito', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    color: #333;
+    background: white;
+    outline: none;
+    transition: border-color 0.2s;
+    appearance: none;
+  }
+  input[type="text"]:focus, select:focus {
+    border-color: #4a7c3f;
+  }
+  .suhu-wrapper {
+    position: relative;
+  }
+  .suhu-unit {
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-weight: 800;
+    color: #999;
+    font-size: 16px;
+  }
+  .btn-submit {
+    width: 100%;
+    padding: 16px;
+    background: #4a7c3f;
+    color: white;
+    border: none;
+    border-radius: 14px;
+    font-family: 'Fredoka One', cursive;
+    font-size: 20px;
+    cursor: pointer;
+    margin-top: 8px;
+    transition: all 0.2s;
+    letter-spacing: 1px;
+  }
+  .btn-submit:hover { background: #3d6835; transform: translateY(-1px); }
+  .btn-submit:active { transform: translateY(0); }
+  .btn-submit:disabled { background: #aaa; cursor: not-allowed; transform: none; }
+  .toast {
+    position: fixed;
+    bottom: 32px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: #4a7c3f;
+    color: white;
+    padding: 14px 28px;
+    border-radius: 50px;
+    font-weight: 800;
+    font-size: 15px;
+    transition: transform 0.3s;
+    z-index: 999;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+  .error-page {
+    text-align: center;
+    padding: 40px;
+  }
+  .error-page h2 { font-family: 'Fredoka One', cursive; color: #c0392b; font-size: 32px; }
+  .error-page p { color: #999; margin-top: 8px; }
+  select option { font-weight: 600; }
+</style>
+</head>
+<body>
+
+<div class="card" id="mainCard">
+  <div class="header">
+    <div class="freezer-id" id="freezerIdDisplay">-</div>
+    <div class="freezer-label">FREEZER</div>
+  </div>
+  <div class="divider"></div>
+
+  <div class="field">
+    <label>Status Freezer</label>
+    <div class="toggle-row">
+      <button class="toggle-btn active-on" id="btnOn" onclick="setStatus('on')">⚡ HIDUP</button>
+      <button class="toggle-btn" id="btnOff" onclick="setStatus('off')">💤 MATI</button>
+    </div>
+  </div>
+
+  <div class="field" id="fieldSuhu">
+    <label>Suhu</label>
+    <div class="suhu-wrapper">
+      <input type="text" id="inputSuhu" placeholder="-18" inputmode="numeric">
+      <span class="suhu-unit">°C</span>
+    </div>
+  </div>
+
+  <div class="field" id="fieldIsi">
+    <label>Isi Freezer</label>
+    <select id="inputIsi">
+      <option value="">-- Pilih Isi --</option>
+      <option value="Daging Durian">Daging Durian</option>
+      <option value="Durian Kupas">Durian Kupas</option>
+      <option value="Aren">Aren</option>
+    </select>
+  </div>
+
+  <button class="btn-submit" id="btnSubmit" onclick="submitData()">SIMPAN DATA</button>
+</div>
+
+<div class="toast" id="toast">✅ Data tersimpan!</div>
+
+<script>
+const SUPABASE_URL = 'https://rfcyibaarczhfhqqxmcj.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJmY3lpYmFhcmN6aGZocXF4bWNqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc1MjY1OTMsImV4cCI6MjA5MzEwMjU5M30.ZU_c3fKKZF00G0lcCDhw_A5NYDzRwR9eetoFR4_vh1k';
+
+const params = new URLSearchParams(window.location.search);
+const freezerId = (params.get('id') || '').toUpperCase();
+
+let currentStatus = 'on';
+
+if (!freezerId || !['A','B','C','D','E','F','G','H','I','J'].includes(freezerId)) {
+  document.getElementById('mainCard').innerHTML = `
+    <div class="error-page">
+      <h2>QR Tidak Valid</h2>
+      <p>Scan ulang QR code yang benar.</p>
+    </div>`;
+} else {
+  document.getElementById('freezerIdDisplay').textContent = 'FREEZER ' + freezerId;
+  loadCurrent();
+}
+
+async function loadCurrent() {
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/freezers?id=eq.${freezerId}&select=*`, {
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
+    });
+    const data = await res.json();
+    if (data && data[0]) {
+      setStatus(data[0].status || 'on');
+      document.getElementById('inputSuhu').value = data[0].suhu || '';
+      document.getElementById('inputIsi').value = data[0].isi || '';
+    }
+  } catch(e) {}
+}
+
+function setStatus(val) {
+  currentStatus = val;
+  document.getElementById('btnOn').className = 'toggle-btn' + (val === 'on' ? ' active-on' : '');
+  document.getElementById('btnOff').className = 'toggle-btn' + (val === 'off' ? ' active-off' : '');
+  document.getElementById('fieldSuhu').style.opacity = val === 'on' ? '1' : '0.4';
+  document.getElementById('fieldIsi').style.opacity = val === 'on' ? '1' : '0.4';
+  document.getElementById('fieldSuhu').style.pointerEvents = val === 'on' ? 'auto' : 'none';
+  document.getElementById('fieldIsi').style.pointerEvents = val === 'on' ? 'auto' : 'none';
+}
+
+async function submitData() {
+  const btn = document.getElementById('btnSubmit');
+  const suhu = document.getElementById('inputSuhu').value.trim();
+  const isi = document.getElementById('inputIsi').value;
+
+  if (currentStatus === 'on' && (!suhu || !isi)) {
+    alert('Lengkapi suhu dan isi freezer!');
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Menyimpan...';
+
+  const payload = {
+    status: currentStatus,
+    suhu: currentStatus === 'on' ? suhu : '',
+    isi: currentStatus === 'on' ? isi : '',
+    updated_at: new Date().toISOString()
+  };
+
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/freezers?id=eq.${freezerId}`, {
+      method: 'PATCH',
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': 'Bearer ' + SUPABASE_KEY,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify(payload)
+    });
+
+    if (res.ok) {
+      showToast();
+    } else {
+      alert('Gagal simpan. Coba lagi.');
+    }
+  } catch(e) {
+    alert('Error koneksi.');
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'SIMPAN DATA';
+}
+
+function showToast() {
+  const t = document.getElementById('toast');
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+</script>
+</body>
+</html>
