@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Freezer System — Bolone Persada</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { min-height: 100vh; background: #f5f5f0; font-family: 'Nunito', sans-serif; }
+
+  /* LOGIN */
+  #loginPage { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; }
+  .login-wrap { width: 100%; max-width: 380px; }
+  .login-logo { text-align: center; margin-bottom: 28px; }
+  .login-logo h1 { font-family: 'Fredoka One', cursive; font-size: 36px; color: #4a7c3f; }
+  .login-logo p { font-size: 13px; color: #999; font-weight: 600; margin-top: 4px; }
+  .login-card { background: white; border-radius: 24px; padding: 32px 28px; box-shadow: 0 8px 32px rgba(0,0,0,0.08); }
+  .field { margin-bottom: 16px; }
+  .field label { display: block; font-size: 12px; font-weight: 800; color: #555; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 8px; }
+  .field input { width: 100%; padding: 14px 16px; border: 2px solid #e0e0d8; border-radius: 14px; font-family: 'Nunito', sans-serif; font-size: 15px; font-weight: 700; color: #333; outline: none; transition: border-color 0.2s; }
+  .field input:focus { border-color: #4a7c3f; }
+  .btn-login { width: 100%; padding: 16px; background: #4a7c3f; color: white; border: none; border-radius: 14px; font-family: 'Fredoka One', cursive; font-size: 20px; cursor: pointer; margin-top: 8px; letter-spacing: 1px; transition: background 0.2s; }
+  .btn-login:hover { background: #3d6835; }
+  .error-msg { color: #c0392b; font-size: 13px; font-weight: 700; text-align: center; margin-top: 12px; display: none; }
+
+  /* APP */
+  #appPage { display: none; min-height: 100vh; flex-direction: column; }
+  .navbar { background: white; border-bottom: 2px solid #e8ead8; padding: 0 20px; display: flex; align-items: center; position: sticky; top: 0; z-index: 100; }
+  .nav-logo { font-family: 'Fredoka One', cursive; font-size: 22px; color: #4a7c3f; padding: 16px 0; margin-right: 24px; white-space: nowrap; }
+  .nav-tabs { display: flex; gap: 4px; flex: 1; }
+  .nav-tab { padding: 18px 20px; border: none; background: none; font-family: 'Nunito', sans-serif; font-size: 14px; font-weight: 800; color: #999; cursor: pointer; border-bottom: 3px solid transparent; transition: all 0.2s; letter-spacing: 0.5px; }
+  .nav-tab:hover { color: #4a7c3f; }
+  .nav-tab.active { color: #4a7c3f; border-bottom-color: #4a7c3f; }
+  .btn-logout { margin-left: auto; background: none; border: 2px solid #e0e0d8; border-radius: 10px; padding: 8px 14px; font-family: 'Nunito', sans-serif; font-size: 13px; font-weight: 800; color: #999; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
+  .btn-logout:hover { border-color: #c0392b; color: #c0392b; }
+  .content { flex: 1; padding: 20px; }
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* DISPLAY */
+  .page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+  .page-title { font-family: 'Fredoka One', cursive; font-size: 32px; color: #4a7c3f; }
+  .btn-download { background: #4a7c3f; color: white; border: none; border-radius: 12px; padding: 10px 20px; font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 14px; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: background 0.2s; }
+  .btn-download:hover { background: #3d6835; }
+  .grid-belakang { display: grid; grid-template-columns: 180px 1fr; gap: 14px; }
+  .col-left { display: flex; flex-direction: column; gap: 14px; grid-row: 1 / span 6; }
+  .col-right { display: flex; flex-direction: column; gap: 14px; }
+  .grid-depan { display: grid; grid-template-columns: 1fr; gap: 20px; }
+  .freezer-card { background: #d6ddb8; border-radius: 18px; padding: 18px 20px; display: flex; flex-direction: column; justify-content: center; min-height: 100px; transition: all 0.3s; }
+  .freezer-card.tall { min-height: 220px; flex: 1; }
+  .freezer-card.medium { min-height: 130px; }
+  .freezer-card.small { min-height: 100px; align-self: flex-end; width: 75%; margin-left: auto; }
+  .freezer-card.wide { min-height: 130px; }
+  .freezer-card.very-tall { min-height: 320px; width: 55%; }
+  .freezer-card.mati { background: #c8cdb0; }
+  .f-name { font-family: 'Fredoka One', cursive; font-size: 15px; color: #4a5c3a; letter-spacing: 1px; margin-bottom: 4px; }
+  .f-info { font-size: 18px; font-weight: 900; color: #3a4a35; line-height: 1.3; }
+  .f-update { font-size: 11px; color: #6a7a60; margin-top: 6px; font-weight: 600; }
+  .f-mati { font-family: 'Fredoka One', cursive; font-size: 28px; color: #5a4a40; text-align: center; }
+  .f-empty { font-size: 13px; color: #aab09a; font-weight: 600; font-style: italic; }
+  .last-refresh { text-align: center; font-size: 12px; color: #aaa; margin-top: 16px; font-weight: 600; }
+
+  /* SCAN */
+  .scan-wrap { max-width: 420px; margin: 0 auto; }
+  .scan-card { background: white; border-radius: 24px; padding: 28px; box-shadow: 0 8px 32px rgba(0,0,0,0.08); }
+
+  /* Camera view */
+  #cameraView { text-align: center; }
+  #cameraView h3 { font-family: 'Fredoka One', cursive; font-size: 22px; color: #4a7c3f; margin-bottom: 8px; }
+  #cameraView p { font-size: 13px; color: #999; font-weight: 600; margin-bottom: 20px; }
+  #qr-reader { border-radius: 16px; overflow: hidden; }
+  #qr-reader video { border-radius: 16px; }
+
+  /* Form view */
+  #formView { display: none; }
+  .selected-freezer-title { font-family: 'Fredoka One', cursive; font-size: 32px; color: #4a7c3f; text-align: center; margin-bottom: 4px; }
+  .btn-rescan { display: block; margin: 0 auto 20px; background: none; border: 2px solid #d6ddb8; border-radius: 12px; padding: 8px 16px; font-family: 'Nunito', sans-serif; font-size: 13px; font-weight: 800; color: #999; cursor: pointer; transition: all 0.2s; }
+  .btn-rescan:hover { border-color: #4a7c3f; color: #4a7c3f; }
+  .divider { height: 2px; background: #f0f0ea; border-radius: 2px; margin: 16px 0; }
+  .scan-field { margin-bottom: 20px; }
+  .scan-field label { display: block; font-size: 12px; font-weight: 800; color: #555; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 8px; }
+  .toggle-row { display: flex; gap: 10px; }
+  .toggle-btn { flex: 1; padding: 14px; border: 2px solid #e0e0d8; border-radius: 14px; background: white; font-family: 'Nunito', sans-serif; font-size: 16px; font-weight: 800; cursor: pointer; transition: all 0.2s; color: #aaa; }
+  .toggle-btn.active-on { background: #4a7c3f; border-color: #4a7c3f; color: white; }
+  .toggle-btn.active-off { background: #c0392b; border-color: #c0392b; color: white; }
+  .scan-input { width: 100%; padding: 14px 16px; border: 2px solid #e0e0d8; border-radius: 14px; font-family: 'Nunito', sans-serif; font-size: 16px; font-weight: 700; color: #333; background: white; outline: none; transition: border-color 0.2s; appearance: none; }
+  .scan-input:focus { border-color: #4a7c3f; }
+  .suhu-wrapper { position: relative; }
+  .suhu-unit { position: absolute; right: 16px; top: 50%; transform: translateY(-50%); font-weight: 800; color: #999; font-size: 16px; }
+  .btn-submit { width: 100%; padding: 16px; background: #4a7c3f; color: white; border: none; border-radius: 14px; font-family: 'Fredoka One', cursive; font-size: 20px; cursor: pointer; margin-top: 8px; transition: all 0.2s; letter-spacing: 1px; }
+  .btn-submit:hover { background: #3d6835; }
+  .btn-submit:disabled { background: #aaa; cursor: not-allowed; }
+  .toast { position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%) translateY(100px); background: #4a7c3f; color: white; padding: 14px 28px; border-radius: 50px; font-weight: 800; font-size: 15px; transition: transform 0.3s; z-index: 999; }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginPage">
+  <div class="login-wrap">
+    <div class="login-logo">
+      <h1>❄️ FREEZER</h1>
+      <p>Bolone Persada Group</p>
+    </div>
+    <div class="login-card">
+      <div class="field">
+        <label>Username</label>
+        <input type="text" id="inputUser" placeholder="Username" autocomplete="off">
+      </div>
+      <div class="field">
+        <label>Password</label>
+        <input type="password" id="inputPass" placeholder="Password" onkeydown="if(event.key==='Enter') doLogin()">
+      </div>
+      <button class="btn-login" onclick="doLogin()">MASUK</button>
+      <div class="error-msg" id="errMsg">Username atau password salah.</div>
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="appPage">
+  <nav class="navbar">
+    <div class="nav-logo">❄️ FREEZER</div>
+    <div class="nav-tabs">
+      <button class="nav-tab active" id="tab-depan" onclick="showPage('depan',this)">🏪 DEPAN</button>
+      <button class="nav-tab" id="tab-belakang" onclick="showPage('belakang',this)">🏭 BELAKANG</button>
+      <button class="nav-tab" id="tab-scan" onclick="showPage('scan',this)">📷 SCAN</button>
+    </div>
+    <button class="btn-logout" onclick="doLogout()">Keluar</button>
+  </nav>
+
+  <div class="content">
+
+    <!-- DEPAN -->
+    <div class="page active" id="page-depan">
+      <div class="page-header">
+        <div class="page-title">DEPAN</div>
+        <button class="btn-download" onclick="downloadPNG('depan-area','freezer-depan')">📥 Download PNG</button>
+      </div>
+      <div id="depan-area">
+        <div class="grid-depan">
+          <div class="freezer-card wide" id="card-I"><div class="f-name">FREEZER I</div><div class="f-empty">Belum ada data</div></div>
+          <div class="freezer-card very-tall" id="card-J"><div class="f-name">FREEZER J</div><div class="f-empty">Belum ada data</div></div>
+        </div>
+      </div>
+      <div class="last-refresh" id="refresh-depan">Memuat data...</div>
+    </div>
+
+    <!-- BELAKANG -->
+    <div class="page" id="page-belakang">
+      <div class="page-header">
+        <div class="page-title">BELAKANG</div>
+        <button class="btn-download" onclick="downloadPNG('belakang-area','freezer-belakang')">📥 Download PNG</button>
+      </div>
+      <div id="belakang-area">
+        <div class="grid-belakang">
+          <div class="col-left">
+            <div class="freezer-card tall" id="card-G"><div class="f-name">FREEZER G</div><div class="f-empty">Belum ada data</div></div>
+            <div class="freezer-card tall" id="card-H"><div class="f-name">FREEZER H</div><div class="f-empty">Belum ada data</div></div>
+          </div>
+          <div class="col-right">
+            <div class="freezer-card medium" id="card-A"><div class="f-name">FREEZER A</div><div class="f-empty">Belum ada data</div></div>
+            <div class="freezer-card medium" id="card-B"><div class="f-name">FREEZER B</div><div class="f-empty">Belum ada data</div></div>
+            <div class="freezer-card medium" id="card-C"><div class="f-name">FREEZER C</div><div class="f-empty">Belum ada data</div></div>
+            <div class="freezer-card small" id="card-D"><div class="f-name">FREEZER D</div><div class="f-empty">Belum ada data</div></div>
+            <div class="freezer-card medium" id="card-E"><div class="f-name">FREEZER E</div><div class="f-empty">Belum ada data</div></div>
+            <div class="freezer-card medium" id="card-F"><div class="f-name">FREEZER F</div><div class="f-empty">Belum ada data</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="last-refresh" id="refresh-belakang">Memuat data...</div>
+    </div>
+
+    <!-- SCAN -->
+    <div class="page" id="page-scan">
+      <div class="scan-wrap">
+        <div class="scan-card">
+
+          <!-- Camera -->
+          <div id="cameraView">
+            <h3>📷 Scan QR Freezer</h3>
+            <p>Arahkan kamera ke QR code yang tertempel di freezer</p>
+            <div id="qr-reader"></div>
+          </div>
+
+          <!-- Form -->
+          <div id="formView">
+            <div class="selected-freezer-title" id="selectedTitle">FREEZER A</div>
+            <button class="btn-rescan" onclick="resetScan()">🔄 Scan Ulang</button>
+            <div class="divider"></div>
+
+            <div class="scan-field">
+              <label>Status Freezer</label>
+              <div class="toggle-row">
+                <button class="toggle-btn active-on" id="btnOn" onclick="setStatus('on')">⚡ HIDUP</button>
+                <button class="toggle-btn" id="btnOff" onclick="setStatus('off')">💤 MATI</button>
+              </div>
+            </div>
+
+            <div class="scan-field" id="fieldSuhu">
+              <label>Suhu</label>
+              <div class="suhu-wrapper">
+                <input type="text" class="scan-input" id="inputSuhu" placeholder="-18" inputmode="numeric">
+                <span class="suhu-unit">°C</span>
+              </div>
+            </div>
+
+            <div class="scan-field" id="fieldIsi">
+              <label>Isi Freezer</label>
+              <select class="scan-input" id="inputIsi">
+                <option value="">-- Pilih Isi --</option>
+                <option value="Daging Durian">Daging Durian</option>
+                <option value="Durian Kupas">Durian Kupas</option>
+                <option value="Aren">Aren</option>
+              </select>
+            </div>
+
+            <button class="btn-submit" id="btnSubmit" onclick="submitData()">SIMPAN DATA</button>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="toast" id="toast">✅ Data tersimpan!</div>
+
+<script>
+const SUPABASE_URL = 'https://rfcyibaarczhfhqqxmcj.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJmY3lpYmFhcmN6aGZocXF4bWNqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc1MjY1OTMsImV4cCI6MjA5MzEwMjU5M30.ZU_c3fKKZF00G0lcCDhw_A5NYDzRwR9eetoFR4_vh1k';
+const USERS = { 'gudang': '250497' };
+const VALID_IDS = ['A','B','C','D','E','F','G','H','I','J'];
+
+let selectedFreezerId = null;
+let currentStatus = 'on';
+let refreshTimer = null;
+let html5QrCode = null;
+let scannerRunning = false;
+
+// ===== AUTH =====
+function doLogin() {
+  const user = document.getElementById('inputUser').value.trim().toLowerCase();
+  const pass = document.getElementById('inputPass').value;
+  if (USERS[user] && USERS[user] === pass) {
+    sessionStorage.setItem('freezer_auth','1');
+    showApp();
+  } else {
+    document.getElementById('errMsg').style.display = 'block';
+    document.getElementById('inputPass').value = '';
+  }
+}
+
+function doLogout() {
+  sessionStorage.removeItem('freezer_auth');
+  stopScanner();
+  document.getElementById('loginPage').style.display = 'flex';
+  document.getElementById('appPage').style.display = 'none';
+  document.getElementById('inputUser').value = '';
+  document.getElementById('inputPass').value = '';
+  document.getElementById('errMsg').style.display = 'none';
+  clearInterval(refreshTimer);
+}
+
+function showApp() {
+  document.getElementById('loginPage').style.display = 'none';
+  document.getElementById('appPage').style.display = 'flex';
+  fetchAll();
+  refreshTimer = setInterval(fetchAll, 30000);
+}
+
+// ===== NAVIGATION =====
+function showPage(name, btn) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  btn.classList.add('active');
+
+  if (name === 'scan') {
+    setTimeout(startScanner, 300);
+  } else {
+    stopScanner();
+  }
+}
+
+// ===== SCANNER =====
+function startScanner() {
+  if (scannerRunning) return;
+  if (!html5QrCode) {
+    html5QrCode = new Html5Qrcode('qr-reader');
+  }
+  html5QrCode.start(
+    { facingMode: 'environment' },
+    { fps: 10, qrbox: { width: 250, height: 250 } },
+    onScanSuccess,
+    () => {}
+  ).then(() => {
+    scannerRunning = true;
+  }).catch(err => {
+    console.error('Camera error:', err);
+  });
+}
+
+function stopScanner() {
+  if (html5QrCode && scannerRunning) {
+    html5QrCode.stop().then(() => {
+      scannerRunning = false;
+    }).catch(() => {});
+  }
+}
+
+function onScanSuccess(decodedText) {
+  // Extract freezer ID dari URL: scan.html?id=A atau langsung "A"
+  let freezerId = null;
+  try {
+    const url = new URL(decodedText);
+    freezerId = url.searchParams.get('id');
+  } catch(e) {
+    // Bukan URL, coba langsung ambil sebagai ID
+    freezerId = decodedText.trim().toUpperCase();
+  }
+
+  if (!freezerId || !VALID_IDS.includes(freezerId.toUpperCase())) {
+    return; // QR tidak valid, lanjut scan
+  }
+
+  freezerId = freezerId.toUpperCase();
+  stopScanner();
+  openForm(freezerId);
+}
+
+async function openForm(id) {
+  selectedFreezerId = id;
+  document.getElementById('selectedTitle').textContent = 'FREEZER ' + id;
+  document.getElementById('cameraView').style.display = 'none';
+  document.getElementById('formView').style.display = 'block';
+
+  // Load data terkini
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/freezers?id=eq.${id}&select=*`, {
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
+    });
+    const data = await res.json();
+    if (data && data[0]) {
+      setStatus(data[0].status || 'on');
+      document.getElementById('inputSuhu').value = data[0].suhu || '';
+      document.getElementById('inputIsi').value = data[0].isi || '';
+    } else {
+      setStatus('on');
+      document.getElementById('inputSuhu').value = '';
+      document.getElementById('inputIsi').value = '';
+    }
+  } catch(e) {}
+}
+
+function resetScan() {
+  selectedFreezerId = null;
+  document.getElementById('cameraView').style.display = 'block';
+  document.getElementById('formView').style.display = 'none';
+  document.getElementById('inputSuhu').value = '';
+  document.getElementById('inputIsi').value = '';
+  setStatus('on');
+  startScanner();
+}
+
+// ===== STATUS =====
+function setStatus(val) {
+  currentStatus = val;
+  document.getElementById('btnOn').className = 'toggle-btn' + (val==='on' ? ' active-on' : '');
+  document.getElementById('btnOff').className = 'toggle-btn' + (val==='off' ? ' active-off' : '');
+  document.getElementById('fieldSuhu').style.opacity = val==='on' ? '1' : '0.4';
+  document.getElementById('fieldIsi').style.opacity = val==='on' ? '1' : '0.4';
+  document.getElementById('fieldSuhu').style.pointerEvents = val==='on' ? 'auto' : 'none';
+  document.getElementById('fieldIsi').style.pointerEvents = val==='on' ? 'auto' : 'none';
+}
+
+// ===== SUBMIT =====
+async function submitData() {
+  if (!selectedFreezerId) return;
+  const btn = document.getElementById('btnSubmit');
+  const suhu = document.getElementById('inputSuhu').value.trim();
+  const isi = document.getElementById('inputIsi').value;
+
+  if (currentStatus === 'on' && (!suhu || !isi)) {
+    alert('Lengkapi suhu dan isi freezer!');
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Menyimpan...';
+
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/freezers?id=eq.${selectedFreezerId}`, {
+      method: 'PATCH',
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': 'Bearer ' + SUPABASE_KEY,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify({
+        status: currentStatus,
+        suhu: currentStatus==='on' ? suhu : '',
+        isi: currentStatus==='on' ? isi : '',
+        updated_at: new Date().toISOString()
+      })
+    });
+    if (res.ok) {
+      showToast();
+      fetchAll();
+      setTimeout(resetScan, 1500);
+    } else {
+      alert('Gagal simpan. Coba lagi.');
+    }
+  } catch(e) { alert('Error koneksi.'); }
+
+  btn.disabled = false;
+  btn.textContent = 'SIMPAN DATA';
+}
+
+// ===== DATA =====
+function formatDate(isoStr) {
+  if (!isoStr) return '-';
+  const d = new Date(isoStr);
+  const dd = String(d.getDate()).padStart(2,'0');
+  const mm = String(d.getMonth()+1).padStart(2,'0');
+  const hh = String(d.getHours()).padStart(2,'0');
+  const min = String(d.getMinutes()).padStart(2,'0');
+  return `${dd}/${mm} | ${hh}:${min}`;
+}
+
+function renderCard(id, data) {
+  const card = document.getElementById('card-' + id);
+  if (!card) return;
+  if (!data || !data.updated_at) {
+    card.classList.remove('mati');
+    card.innerHTML = `<div class="f-name">FREEZER ${id}</div><div class="f-empty">Belum ada data</div>`;
+    return;
+  }
+  if (data.status === 'off') {
+    card.classList.add('mati');
+    card.innerHTML = `<div class="f-name">FREEZER ${id}</div><div class="f-mati">MATI</div><div class="f-update">(Last Update ${formatDate(data.updated_at)})</div>`;
+  } else {
+    card.classList.remove('mati');
+    card.innerHTML = `<div class="f-name">FREEZER ${id}</div><div class="f-info">${data.suhu ? data.suhu+'° | ' : ''}${data.isi||'-'}</div><div class="f-update">(Last Update ${formatDate(data.updated_at)})</div>`;
+  }
+}
+
+async function fetchAll() {
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/freezers?select=*`, {
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
+    });
+    const data = await res.json();
+    data.forEach(row => renderCard(row.id, row));
+    const now = new Date().toLocaleTimeString('id-ID');
+    document.getElementById('refresh-depan').textContent = 'Refresh otomatis tiap 30 detik · ' + now;
+    document.getElementById('refresh-belakang').textContent = 'Refresh otomatis tiap 30 detik · ' + now;
+  } catch(e) {}
+}
+
+// ===== DOWNLOAD =====
+function downloadPNG(areaId, filename) {
+  const area = document.getElementById(areaId);
+  html2canvas(area, { backgroundColor: '#f5f5f0', scale: 2 }).then(canvas => {
+    const link = document.createElement('a');
+    link.download = filename + '-' + new Date().toISOString().slice(0,10) + '.png';
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+  });
+}
+
+function showToast() {
+  const t = document.getElementById('toast');
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ===== BOOT =====
+if (sessionStorage.getItem('freezer_auth') === '1') {
+  document.getElementById('loginPage').style.display = 'none';
+  showApp();
+}
+</script>
+</body>
+</html>
