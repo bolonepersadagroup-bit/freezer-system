@@ -274,11 +274,8 @@ async function submitData() {
       body: JSON.stringify(payload)
     });
 
-    if (res.ok) {
-      showToast();
-    } else {
-      alert('Gagal simpan. Coba lagi.');
-    }
+    const responseText = await res.text();
+alert('Status: ' + res.status + ' | Body: ' + responseText);
   } catch(e) {
     alert('Error koneksi.');
   }

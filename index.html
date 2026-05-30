@@ -272,6 +272,19 @@ function showApp() {
   document.getElementById('appPage').style.display = 'flex';
   fetchAll();
   refreshTimer = setInterval(fetchAll, 30000);
+
+  // Cek pending freezer dari QR scan
+  const pendingId = sessionStorage.getItem('pending_freezer_id');
+  if (pendingId && VALID_IDS.includes(pendingId)) {
+    sessionStorage.removeItem('pending_freezer_id');
+    setTimeout(() => {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+      document.getElementById('page-scan').classList.add('active');
+      document.getElementById('tab-scan').classList.add('active');
+      openForm(pendingId);
+    }, 500);
+  }
 }
 
 // ===== NAVIGATION =====
@@ -482,9 +495,25 @@ function showToast() {
 }
 
 // ===== BOOT =====
+const bootParams = new URLSearchParams(window.location.search);
+const bootId = (bootParams.get('id') || '').toUpperCase();
+
 if (sessionStorage.getItem('freezer_auth') === '1') {
   document.getElementById('loginPage').style.display = 'none';
   showApp();
+  if (bootId && VALID_IDS.includes(bootId)) {
+    // Auto buka tab scan dan form freezer yang sesuai
+    setTimeout(() => {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+      document.getElementById('page-scan').classList.add('active');
+      document.getElementById('tab-scan').classList.add('active');
+      openForm(bootId);
+    }, 500);
+  }
+} else if (bootId && VALID_IDS.includes(bootId)) {
+  // Simpan id dulu, setelah login langsung buka form
+  sessionStorage.setItem('pending_freezer_id', bootId);
 }
 </script>
 </body>
